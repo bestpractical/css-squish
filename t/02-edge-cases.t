@@ -2,7 +2,8 @@
 use strict;
 use warnings;
 
-use Test::More skip_all => "Not complete.";
+use Test::More tests => 2;
+use Test::LongString;
 
 use_ok("CSS::Squish");
 
@@ -10,52 +11,67 @@ my $expected_result = <<'EOT';
 
 
 /**
-  * Original CSS: @import "t/css/blam.css" print;
+  * From t/css/02-edge-cases.css: @import "blam.css" print;
   */
 
 @media print {
 Blam!
 }
 
+/** End of blam.css */
+
+
 /**
-  * Original CSS: @import "t/css/blam.css";
+  * From t/css/02-edge-cases.css: @import "blam.css";
   */
 
 Blam!
 
+/** End of blam.css */
+
+
 /**
-  * Original CSS: @import url( "t/css/foo.css") print,aural;
+  * From t/css/02-edge-cases.css: @import url( "foo.css") print,aural;
   */
 
 @media print,aural {
 foo1
 }
 
+/** End of foo.css */
+
+
 /**
-  * Original CSS: @import url(t/css/foo2.css ) print, aural, tty;
+  * From t/css/02-edge-cases.css: @import url(foo2.css ) print, aural, tty;
   */
 
 @media print, aural, tty {
 foo2
 }
 
+/** End of foo2.css */
+
+
 /**
-  * Original CSS: @import 'failure.css' print;
+  * From t/css/02-edge-cases.css: @import 'failure.css' print;
   */
 
 @media print {
-/* WARNING: Unable to open file 'failure.css': No such file or directory */
+/* WARNING: Unable to open file 't/css/failure.css': No such file or directory */
 }
+
+/** End of failure.css */
+
 
 fjkls
  jk
-
-@import url("t/css/foo.css");
+ 
+@import url("foo.css");
 
 last
 EOT
 
 my $result = CSS::Squish->concatenate('t/css/02-edge-cases.css');
 
-is($result, $expected_result, "Edge cases");
+is_string($result, $expected_result, "Edge cases");
 
