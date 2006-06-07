@@ -116,6 +116,12 @@ sub concatenate_to {
                 my @spec = File::Spec->splitpath( $file );
                 my $import_path = File::Spec->catpath( @spec[0,1], $import );
 
+                if ($import_path eq $file) {
+                    # We're in a direct loop, don't import this
+                    print $dest "/** Skipping: \n", $line, "  */\n\n";
+                    next IMPORT;
+                }
+
                 print $dest "\n/**\n  * From $file: $line  */\n\n";
                 
                 if (defined $media) {
@@ -145,6 +151,9 @@ At the current time, comments are not skipped.  This means comments happening
 before @import statements at the top of a file will cause the @import rules
 to not be parsed.  Make sure the @import rules are the very first thing in
 the file (and only one per line).
+
+Only direct @import loops (i.e. where a file imports itself) are checked
+and skipped.  It's easy enough to get this module in a loop.  Don't do it.
 
 All other bugs should be reported via
 L<http://rt.cpan.org/Public/Dist/Display.html?Name=CSS-Squish>
