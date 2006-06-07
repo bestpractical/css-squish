@@ -1,0 +1,13 @@
+
+@import "t/css/blam.css" print;
+@import "t/css/blam.css";
+@import url( "t/css/foo.css") print,aural;
+@import url(t/css/foo2.css ) print, aural, tty;
+@import 'failure.css' print;
+
+fjkls
+ jk
+ 
+@import url("t/css/foo.css");
+
+last
