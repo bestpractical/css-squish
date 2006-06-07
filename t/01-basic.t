@@ -10,10 +10,13 @@ my $expected_result = <<'EOT';
 
 
 /**
-  * Original CSS: @import "t/css/01-basic-import.css";
+  * From t/css/01-basic.css: @import "01-basic-import.css";
   */
 
 inside 01-basic-import.css
+
+/** End of 01-basic-import.css */
+
 body { color: blue; }
 
 EOT

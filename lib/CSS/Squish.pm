@@ -5,6 +5,8 @@ package CSS::Squish;
 
 $CSS::Squish::VERSION = '0.01';
 
+use File::Spec;
+
 =head1 NAME
 
 CSS::Squish - Compact many CSS files into one big file
@@ -98,26 +100,38 @@ sub concatenate_to {
             next FILE;
         }
         
-        PROCESS_IMPORTS:
+        IMPORT:
         while (my $line = <$fh>) {
             if ($line =~ /$AT_IMPORT/) {
                 my $import = $1;
                 my $media  = $2;
 
-                print $dest "\n/**\n  * Original CSS: $line  */\n\n";
+                if ( $import =~ m{^https?://} ) {
+                    # Skip remote URLs
+                    print $dest $line;
+                    next IMPORT;
+                }
+
+                # We need the path relative to where we're importing it from
+                my @spec = File::Spec->splitpath( $file );
+                my $import_path = File::Spec->catpath( @spec[0,1], $import );
+
+                print $dest "\n/**\n  * From $file: $line  */\n\n";
                 
                 if (defined $media) {
                     print $dest "\@media $media {\n";
-                    $self->concatenate_to($dest, $import);
+                    $self->concatenate_to($dest, $import_path);
                     print $dest "}\n";
                 }
                 else {
-                    $self->concatenate_to($dest, $import);
+                    $self->concatenate_to($dest, $import_path);
                 }
+
+                print $dest "\n/** End of $import */\n\n";
             }
             else {
                 print $dest $line;
-                last PROCESS_IMPORTS if not $line =~ /^\s*$/;
+                last IMPORT if not $line =~ /^\s*$/;
             }
         }
         print $dest $_ while <$fh>;

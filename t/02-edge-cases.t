@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More skip_all => "diff says the output is the same.  Test::More doesn't.  Argh.";
+use Test::More skip_all => "Not complete.";
 
 use_ok("CSS::Squish");
 
