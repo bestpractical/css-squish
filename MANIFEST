@@ -8,6 +8,8 @@ t/01-basic.t
 t/02-edge-cases.t
 t/03-skip-http.t
 t/04-recursion.t
+t/05-basic-loop-prevention.t
+t/06-server-relative-urls.t
 t/99-pod-coverage.t
 t/99-pod.t
 t/css/01-basic-import.css
@@ -15,6 +17,9 @@ t/css/01-basic.css
 t/css/02-edge-cases.css
 t/css/03-skip-http.css
 t/css/04-recursion.css
+t/css/05-loop-prevention-2.css
+t/css/05-loop-prevention-3.css
+t/css/05-loop-prevention.css
 t/css/blam.css
 t/css/foo.css
 t/css/foo/04-recursion-2.css
