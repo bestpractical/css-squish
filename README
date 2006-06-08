@@ -28,15 +28,21 @@ METHODS
     Takes a filehandle to print to and a list of files to concatenate.
     "concatenate" uses this method with an "open"ed scalar.
 
-BUGS
+BUGS AND SHORTCOMINGS
     At the current time, comments are not skipped. This means comments
     happening before @import statements at the top of a file will cause the
     @import rules to not be parsed. Make sure the @import rules are the very
     first thing in the file (and only one per line).
 
+    Only direct @import loops (i.e. where a file imports itself) are checked
+    and skipped. It's easy enough to get this module in a loop. Don't do it.
+
+    As of now, server-relative URLs (instead of file-relative URLs) will not
+    work correctly.
+
     All other bugs should be reported via
     <http://rt.cpan.org/Public/Dist/Display.html?Name=CSS-Squish> or
-    bugs-CSS-Squish@rt.cpan.org.
+    bug-CSS-Squish@rt.cpan.org.
 
 AUTHOR
     Thomas Sibley <trs@bestpractical.com>

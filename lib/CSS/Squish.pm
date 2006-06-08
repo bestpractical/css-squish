@@ -3,7 +3,7 @@ use warnings;
 
 package CSS::Squish;
 
-$CSS::Squish::VERSION = '0.01';
+$CSS::Squish::VERSION = '0.02';
 
 use File::Spec;
 
@@ -145,7 +145,7 @@ sub concatenate_to {
     }
 }
 
-=head1 BUGS
+=head1 BUGS AND SHORTCOMINGS
 
 At the current time, comments are not skipped.  This means comments happening
 before @import statements at the top of a file will cause the @import rules
@@ -155,9 +155,12 @@ the file (and only one per line).
 Only direct @import loops (i.e. where a file imports itself) are checked
 and skipped.  It's easy enough to get this module in a loop.  Don't do it.
 
+As of now, server-relative URLs (instead of file-relative URLs) will not work
+correctly.
+
 All other bugs should be reported via
 L<http://rt.cpan.org/Public/Dist/Display.html?Name=CSS-Squish>
-or L<bugs-CSS-Squish@rt.cpan.org>.
+or L<bug-CSS-Squish@rt.cpan.org>.
 
 =head1 AUTHOR
 
