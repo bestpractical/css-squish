@@ -3,7 +3,7 @@ use warnings;
 
 package CSS::Squish;
 
-$CSS::Squish::VERSION = '0.02';
+$CSS::Squish::VERSION = '0.03';
 
 use File::Spec;
 
