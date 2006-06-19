@@ -3,7 +3,11 @@ use warnings;
 
 package CSS::Squish;
 
-$CSS::Squish::VERSION = '0.03';
+$CSS::Squish::VERSION = '0.04';
+
+# Setting this to true will enable lots of debug logging about what
+# CSS::Squish is doing
+$CSS::Squish::DEBUG   = 0;
 
 use File::Spec;
 
@@ -39,6 +43,8 @@ is not supported at the current time.
 # XXX TODO: This does NOT deal with comments at all at the moment.  Which
 # is sort of a problem.
 # 
+
+my @ROOTS = qw( );
 
 my @MEDIA_TYPES = qw(all aural braille embossed handheld print
                      projection screen tty tv);
@@ -80,8 +86,12 @@ sub concatenate {
     my $self   = shift;
     my $string = '';
     
+    $self->_debug("Opening scalar as file");
+    
     open my $fh, '>', \$string or die "Can't open scalar as file! $!";
     $self->concatenate_to($fh, @_);
+
+    $self->_debug("Closing scalar as file");
     close $fh;
 
     return $string;
@@ -90,12 +100,16 @@ sub concatenate {
 sub concatenate_to {
     my $self = shift;
     my $dest = shift;
+
+    $self->_debug("Looping over list of files: ", join(", ", @_), "\n");
     
     FILE:
     while (my $file = shift @_) {
         my $fh;
         
+        $self->_debug("Opening '$file'");
         if (not open $fh, '<', $file) {
+            $self->_debug("Skipping '$file' due to error");
             print $dest qq[/* WARNING: Unable to open file '$file': $! */\n];
             next FILE;
         }
@@ -106,7 +120,11 @@ sub concatenate_to {
                 my $import = $1;
                 my $media  = $2;
 
+                $self->_debug("Processing import '$import'");
+                
                 if ( $import =~ m{^https?://} ) {
+                    $self->_debug("Skipping import because it's a remote URL");
+
                     # Skip remote URLs
                     print $dest $line;
                     next IMPORT;
@@ -114,9 +132,26 @@ sub concatenate_to {
 
                 # We need the path relative to where we're importing it from
                 my @spec = File::Spec->splitpath( $file );
-                my $import_path = File::Spec->catpath( @spec[0,1], $import );
+
+                # This first searches for the import relative to the file
+                # it is imported from and then in any user-specified roots
+                my $import_path = $self->_resolve_file(
+                                        $import,
+                                        File::Spec->catpath( @spec[0,1], '' ),
+                                        $self->roots
+                                  );
+
+                if ( not defined $import_path ) {
+                    $self->_debug("Skipping import of '$import'");
+                    
+                    print $dest qq[/* WARNING: Unable to find import '$import' */\n];
+                    print $dest $line;
+                    next IMPORT;
+                }
 
                 if ($import_path eq $file) {
+                    $self->_debug("Skipping import because it's a loop");
+                
                     # We're in a direct loop, don't import this
                     print $dest "/** Skipping: \n", $line, "  */\n\n";
                     next IMPORT;
@@ -140,9 +175,45 @@ sub concatenate_to {
                 last IMPORT if not $line =~ /^\s*$/;
             }
         }
+        $self->_debug("Printing the rest of '$file'");
         print $dest $_ while <$fh>;
+
+        $self->_debug("Closing '$file'");
         close $fh;
     }
+}
+
+=head2 B<CSS::Squish-E<gt>roots(@dirs)>
+
+A getter/setter for additional paths to search when looking for imported
+files.  The paths specified here are searched after trying to find the import
+relative to the file from which it is imported.  This is useful if your
+server has multiple document roots from which your CSS imports files.
+
+=cut
+
+sub roots {
+    my $self = shift;
+    @ROOTS = @_ if @_;
+    return @ROOTS;
+}
+
+sub _resolve_file {
+    my $self = shift;
+    my $file = shift;
+
+    for my $root ( @_ ) {
+        my @spec = File::Spec->splitpath( $root, 1 );
+        my $path = File::Spec->catpath( @spec[0,1], $file );
+        
+        return $path if -e $path;
+    }
+    return;
+}
+
+sub _debug {
+    my $self = shift;
+    warn( ( caller(1) )[3], ": ", @_, "\n") if $CSS::Squish::DEBUG;
 }
 
 =head1 BUGS AND SHORTCOMINGS

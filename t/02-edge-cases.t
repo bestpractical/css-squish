@@ -51,17 +51,8 @@ foo2
 
 /** End of foo2.css */
 
-
-/**
-  * From t/css/02-edge-cases.css: @import 'failure.css' print;
-  */
-
-@media print {
-/* WARNING: Unable to open file 't/css/failure.css': No such file or directory */
-}
-
-/** End of failure.css */
-
+/* WARNING: Unable to find import 'failure.css' */
+@import 'failure.css' print;
 
 fjkls
  jk
