@@ -10,6 +10,7 @@ t/03-skip-http.t
 t/04-recursion.t
 t/05-basic-loop-prevention.t
 t/06-server-relative-urls.t
+t/07-basic-extra-roots.t
 t/99-pod-coverage.t
 t/99-pod.t
 t/css/01-basic-import.css
@@ -20,8 +21,10 @@ t/css/04-recursion.css
 t/css/05-loop-prevention-2.css
 t/css/05-loop-prevention-3.css
 t/css/05-loop-prevention.css
+t/css/07-basic-extra-roots.css
 t/css/blam.css
 t/css/foo.css
 t/css/foo/04-recursion-2.css
 t/css/foo/04-recursion-3.css
 t/css/foo2.css
+t/css2/07-basic-extra-roots2.css
