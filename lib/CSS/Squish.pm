@@ -197,6 +197,7 @@ and lets you override the default behaviour (but still fall back to it).
 sub roots {
     my $self = shift;
     @ROOTS = @_ if @_;
+    $self->_debug("Roots are: '", join( "', '", @ROOTS ), "'");
     return @ROOTS;
 }
 
@@ -205,6 +206,7 @@ sub _resolve_file {
     my $file = shift;
 
     for my $root ( @_ ) {
+        $self->_debug("Searching dir: $root");
         my @spec = File::Spec->splitpath( $root, 1 );
         my $path = File::Spec->catpath( @spec[0,1], $file );
         
