@@ -3,7 +3,7 @@ use warnings;
 
 package CSS::Squish;
 
-$CSS::Squish::VERSION = '0.04';
+$CSS::Squish::VERSION = '0.05';
 
 # Setting this to true will enable lots of debug logging about what
 # CSS::Squish is doing
@@ -133,12 +133,13 @@ sub concatenate_to {
                 # We need the path relative to where we're importing it from
                 my @spec = File::Spec->splitpath( $file );
 
-                # This first searches for the import relative to the file
-                # it is imported from and then in any user-specified roots
+                # This first searches any user-specified roots for the
+                # imported file and if that fails, tries to find it
+                # relative to the importing file
                 my $import_path = $self->_resolve_file(
                                         $import,
+                                        $self->roots,
                                         File::Spec->catpath( @spec[0,1], '' ),
-                                        $self->roots
                                   );
 
                 if ( not defined $import_path ) {
@@ -186,9 +187,10 @@ sub concatenate_to {
 =head2 B<CSS::Squish-E<gt>roots(@dirs)>
 
 A getter/setter for additional paths to search when looking for imported
-files.  The paths specified here are searched after trying to find the import
-relative to the file from which it is imported.  This is useful if your
-server has multiple document roots from which your CSS imports files.
+files.  The paths specified here are searched _before_ trying to find the
+import relative to the file from which it is imported.  This is useful if
+your server has multiple document roots from which your CSS imports files
+and lets you override the default behaviour (but still fall back to it).
 
 =cut
 

@@ -28,6 +28,14 @@ METHODS
     Takes a filehandle to print to and a list of files to concatenate.
     "concatenate" uses this method with an "open"ed scalar.
 
+  CSS::Squish->roots(@dirs)
+    A getter/setter for additional paths to search when looking for imported
+    files. The paths specified here are searched _before_ trying to find the
+    import relative to the file from which it is imported. This is useful if
+    your server has multiple document roots from which your CSS imports
+    files and lets you override the default behaviour (but still fall back
+    to it).
+
 BUGS AND SHORTCOMINGS
     At the current time, comments are not skipped. This means comments
     happening before @import statements at the top of a file will cause the

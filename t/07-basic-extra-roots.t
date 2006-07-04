@@ -18,11 +18,29 @@ foobar
 
 /** End of 07-basic-extra-roots2.css */
 
+
+/**
+  * From t/css/07-basic-extra-roots.css: @import "07-basic-extra-roots3.css";
+  */
+
+foobaz
+
+/** End of 07-basic-extra-roots3.css */
+
+
+/**
+  * From t/css/07-basic-extra-roots.css: @import "07-basic-extra-roots4.css";
+  */
+
+fallback
+
+/** End of 07-basic-extra-roots4.css */
+
 blam
 
 EOT
 
-CSS::Squish->roots( 't/css2/' );
+CSS::Squish->roots( 't/css2/', 't/css3/' );
 my $result = CSS::Squish->concatenate('t/css/07-basic-extra-roots.css');
 
 is_string($result, $expected_result, "Basic extra roots");
