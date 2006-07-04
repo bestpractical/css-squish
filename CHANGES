@@ -1,5 +1,16 @@
 Revision history for Perl extension CSS::Squish.
 
+0.05  Tue Jul 4 2006
+
+    * INCOMPATIBLE CHANGE
+    
+      CSS::Squish now searches the user-specified roots _before_ searching
+      relative to the importing file.  This seems to make more sense in
+      general and allows overriding the default behaviour more easily.
+      
+      For users not using the multiple roots functionality, behaviour has
+      not changed.
+
 0.02  Wed Jun 7 2006
 
     * Fixed POD and added another bug note
