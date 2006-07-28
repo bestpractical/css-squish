@@ -31,7 +31,7 @@ the included file in an @media rule.  This has the side effect of actually
 I<improving> compatibility in Internet Explorer, which ignores
 media-specific @import rules but understands @media rules.
 
-It is possible that feature versions will include methods to compact
+It is possible that future versions will include methods to compact
 whitespace and other parts of the CSS itself, but this functionality
 is not supported at the current time.
 
@@ -225,7 +225,8 @@ sub _debug {
 At the current time, comments are not skipped.  This means comments happening
 before @import statements at the top of a file will cause the @import rules
 to not be parsed.  Make sure the @import rules are the very first thing in
-the file (and only one per line).
+the file (and only one per line).  Processing of @import rules stops as soon
+as the first line that doesn't match an @import rule is encountered.
 
 Only direct @import loops (i.e. where a file imports itself) are checked
 and skipped.  It's easy enough to get this module in a loop.  Don't do it.
