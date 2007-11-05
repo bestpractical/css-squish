@@ -10,6 +10,7 @@ $CSS::Squish::VERSION = '0.05';
 $CSS::Squish::DEBUG   = 0;
 
 use File::Spec;
+use Scalar::Util qw(blessed);
 
 =head1 NAME
 
@@ -201,9 +202,16 @@ and lets you override the default behaviour (but still fall back to it).
 
 sub roots {
     my $self = shift;
-    @ROOTS = @_ if @_;
-    $self->_debug("Roots are: '", join( "', '", @ROOTS ), "'");
-    return @ROOTS;
+    my @res;
+    unless ( blessed $self ) {
+        @ROOTS = @_ if @_;
+        @res = @ROOTS;
+    } else {
+        $self->{'roots'} = [ grep defined, @_ ] if @_;
+        @res = @{ $self->{'roots'} };
+    }
+    $self->_debug("Roots are: ". join ", ", map "'$_'", @res);
+    return @res;
 }
 
 sub _resolve_file {
