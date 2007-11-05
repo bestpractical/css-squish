@@ -122,7 +122,7 @@ sub concatenate_to {
         
         IMPORT:
         while (my $line = <$fh>) {
-            if ($line =~ /$AT_IMPORT/) {
+            if ($line =~ /$AT_IMPORT/o) {
                 my $import = $1;
                 my $media  = $2;
 
