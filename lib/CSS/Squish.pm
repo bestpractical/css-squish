@@ -82,6 +82,11 @@ C<concatenate> uses this method with an C<open>ed scalar.
 
 =cut
 
+sub new {
+    my $proto = shift;
+    return bless {@_}, ref($proto) || $proto;
+}
+
 sub concatenate {
     my $self   = shift;
     my $string = '';
