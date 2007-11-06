@@ -7,10 +7,12 @@ $CSS::Squish::VERSION = '0.05';
 
 # Setting this to true will enable lots of debug logging about what
 # CSS::Squish is doing
-$CSS::Squish::DEBUG   = 0;
+$CSS::Squish::DEBUG = 0;
 
 use File::Spec;
 use Scalar::Util qw(blessed);
+use URI;
+use URI::file;
 
 =head1 NAME
 
@@ -18,8 +20,11 @@ CSS::Squish - Compact many CSS files into one big file
 
 =head1 SYNOPSIS
 
- use CSS::Squish;
- my $concatenated = CSS::Squish->concatenate(@files);
+  use CSS::Squish;
+  my $concatenated = CSS::Squish->concatenate(@files);
+
+  my $squisher = CSS::Squish->new( roots => ['/root1', '/root2'] );
+  my $concatenated = $squisher->concatenate(@files);
 
 =head1 DESCRIPTION
 
@@ -50,7 +55,7 @@ my @ROOTS = qw( );
 my @MEDIA_TYPES = qw(all aural braille embossed handheld print
                      projection screen tty tv);
 my $MEDIA_TYPES = '(?:' . join('|', @MEDIA_TYPES) . ')';
-my $MEDIA_LIST  = qr/(?:$MEDIA_TYPES,\s*)*?$MEDIA_TYPES/;
+my $MEDIA_LIST  = qr/$MEDIA_TYPES(?:\s*,\s*$MEDIA_TYPES)*/;
 
 my $AT_IMPORT = qr/^\s*                     # leading whitespace
                     \@import\s+             # @import
@@ -70,7 +75,23 @@ my $AT_IMPORT = qr/^\s*                     # leading whitespace
                    \s*$                     # trailing whitespace
                   /x;
 
-=head1 METHODS
+=head1 COMMON METHODS
+
+=head2 new( [roots=>[...]] )
+
+A constructor. For backward compatibility with versions prior to 0.06
+you can still call everything as a class method, but should remember
+that roots are shared between all callers in this case.
+
+if you're using persistent environment (like mod_perl) then it's very
+recomended to use objects.
+
+=cut
+
+sub new {
+    my $proto = shift;
+    return bless {@_}, ref($proto) || $proto;
+}
 
 =head2 B<CSS::Squish-E<gt>concatenate(@files)>
 
@@ -82,11 +103,6 @@ Takes a filehandle to print to and a list of files to concatenate.
 C<concatenate> uses this method with an C<open>ed scalar.
 
 =cut
-
-sub new {
-    my $proto = shift;
-    return bless {@_}, ref($proto) || $proto;
-}
 
 sub concatenate {
     my $self   = shift;
@@ -108,95 +124,116 @@ sub concatenate_to {
     my $dest = shift;
 
     $self->_debug("Looping over list of files: ", join(", ", @_), "\n");
-    
-    FILE:
-    while (my $file = shift @_) {
-        my $fh;
-        
-        $self->_debug("Opening '$file'");
-        if (not open $fh, '<', $file) {
-            $self->_debug("Skipping '$file' due to error");
-            print $dest qq[/* WARNING: Unable to open file '$file': $! */\n];
-            next FILE;
+
+    my %seen = ();
+    while ( my $file = shift @_ ) {
+
+        next if $seen{ $file }{'all'}++;
+
+        my $fh = $self->file_handle( $file );
+        unless ( defined $fh ) {
+            $self->_debug("Skipping '$file'...");
+            print $dest qq[/* WARNING: Unable to find/open file '$file' */\n];
+            next;
         }
-        
-        IMPORT:
-        while (my $line = <$fh>) {
-            if ($line =~ /$AT_IMPORT/o) {
-                my $import = $1;
-                my $media  = $2;
-
-                $self->_debug("Processing import '$import'");
-                
-                if ( $import =~ m{^https?://} ) {
-                    $self->_debug("Skipping import because it's a remote URL");
-
-                    # Skip remote URLs
-                    print $dest $line;
-                    next IMPORT;
-                }
-
-                # We need the path relative to where we're importing it from
-                my @spec = File::Spec->splitpath( $file );
-
-                # This first searches any user-specified roots for the
-                # imported file and if that fails, tries to find it
-                # relative to the importing file
-                my $import_path = $self->_resolve_file(
-                                        $import,
-                                        $self->roots,
-                                        File::Spec->catpath( @spec[0,1], '' ),
-                                  );
-
-                if ( not defined $import_path ) {
-                    $self->_debug("Skipping import of '$import'");
-                    
-                    print $dest qq[/* WARNING: Unable to find import '$import' */\n];
-                    print $dest $line;
-                    next IMPORT;
-                }
-
-                if ($import_path eq $file) {
-                    $self->_debug("Skipping import because it's a loop");
-                
-                    # We're in a direct loop, don't import this
-                    print $dest "/** Skipping: \n", $line, "  */\n\n";
-                    next IMPORT;
-                }
-
-                print $dest "\n/**\n  * From $file: $line  */\n\n";
-                
-                if (defined $media) {
-                    print $dest "\@media $media {\n";
-                    $self->concatenate_to($dest, $import_path);
-                    print $dest "}\n";
-                }
-                else {
-                    $self->concatenate_to($dest, $import_path);
-                }
-
-                print $dest "\n/** End of $import */\n\n";
-            }
-            else {
-                print $dest $line;
-                last IMPORT if not $line =~ /^\s*$/;
-            }
-        }
-        $self->_debug("Printing the rest of '$file'");
-        print $dest $_ while <$fh>;
-
-        $self->_debug("Closing '$file'");
-        close $fh;
+        $self->_concatenate_to( $dest, $fh, $file, \%seen );
     }
 }
 
+sub _concatenate_to {
+    my $self = shift;
+    my $dest = shift;
+    my $fh   = shift;
+    my $file = shift;
+    my $seen = shift || {};
+
+    while ( my $line = <$fh> ) {
+        if ( $line =~ /$AT_IMPORT/o ) {
+            my $import = $1;
+            my $media  = $2;
+
+            $self->_debug("Processing import '$import'");
+
+            # resolve URI against the current file and get the file path
+            # which is always relative to our root(s)
+            my $path = $self->resolve_uri( $import, $file );
+            unless ( defined $path ) {
+                $self->_debug("Skipping import because couldn't resolve URL");
+                print $dest $line;
+                next;
+            }
+
+            if ( $seen->{ $path }{'all'} ) {
+                $self->_debug("Skipping import as it was included for all media types");
+                print $dest "/** Skipping: \n", $line, "  */\n\n";
+                next;
+            }
+
+            if ( $media ) {
+                my @list = sort map lc, split /\s*,\s*/, ($media||'');
+                if ( grep $_ eq 'all', @list ) {
+                    @list = ();
+                }
+                $media = join ', ', @list;
+            }
+            if ( $seen->{ $path }{ $media || 'all' }++ ) {
+                $self->_debug("Skipping import as it's recursion");
+                print $dest "/** Skipping: \n", $line, "  */\n\n";
+                next;
+            }
+
+            # Look up the new file in root(s), so we can leave import
+            # if something is wrong
+            my $new_fh = $self->file_handle( $path );
+            unless ( defined $new_fh ) {
+                $self->_debug("Skipping import of '$import'");
+
+                print $dest qq[/* WARNING: Unable to find import '$import' */\n];
+                print $dest $line;
+                next;
+            }
+
+            print $dest "\n/**\n  * From $file: $line  */\n\n";
+
+            if ( defined $media ) {
+                print $dest "\@media $media {\n";
+                $self->_concatenate_to($dest, $new_fh, $path, $seen);
+                print $dest "}\n";
+            }
+            else {
+                $self->_concatenate_to($dest, $new_fh, $path, $seen);
+            }
+
+            print $dest "\n/** End of $import */\n\n";
+        }
+        else {
+            print $dest $line;
+            last if not $line =~ /^\s*$/;
+        }
+    }
+    $self->_debug("Printing the rest");
+    print $dest $_ while <$fh>;
+    close $fh;
+}
+
+=head1 RESOLVING METHODS
+
+The following methods help map URIs to files and find them on the disk.
+
+In common situation you control CSS and can adopt it to use imports with
+relative URIs and most probably only have to set root(s).
+
+However, you can use subclass these methods to parse css files before submitting,
+implement advanced mapping of URIs to file system and other crazy things.
+
 =head2 B<CSS::Squish-E<gt>roots(@dirs)>
 
-A getter/setter for additional paths to search when looking for imported
-files.  The paths specified here are searched _before_ trying to find the
-import relative to the file from which it is imported.  This is useful if
-your server has multiple document roots from which your CSS imports files
-and lets you override the default behaviour (but still fall back to it).
+A getter/setter for paths to search when looking for files.
+
+The paths specified here are searched to find file. This is useful if
+your server has multiple document roots.
+
+See also 'resolve_file' below.
 
 =cut
 
@@ -214,18 +251,108 @@ sub roots {
     return @res;
 }
 
-sub _resolve_file {
+=head2 file_handle( $file )
+
+Takes a path to a file, resolves (see resolve_file) it and returns a handle.
+
+Returns undef if file couldn't be resolved or it's impossible to open file.
+
+You can subclass it to filter content, process it with templating system or
+generate it on the fly:
+
+    package My::CSS::Squish;
+    use base qw(CSS::Squish);
+
+    sub file_handle {
+        my $self = shift;
+        my $file = shift;
+        
+        my $content = $self->my_prepare_content($file);
+        return undef unless defined $content;
+
+        open my $fh, "<", \$content or warn "Couldn't open handle: $!";
+        return $fh;
+    }
+
+B<Note> that the file is not resolved yet and is relative to the root(s), so
+you have to resolve it yourself or call resolve_file method.
+
+=cut
+
+sub file_handle {
     my $self = shift;
     my $file = shift;
 
-    for my $root ( @_ ) {
-        $self->_debug("Searching dir: $root");
+    my $path = $self->resolve_file( $file );
+    unless ( defined $path ) {
+        $self->_debug("Couldn't find '$file' in root(s)");
+        return undef;
+    }
+
+    my $fh;
+    unless ( open $fh, '<', $path ) {
+        $self->_debug("Skipping '$file' ($path) due to error: $!");
+        return undef;
+    }
+    return $fh;
+}
+
+=head2 resolve_file( $file )
+
+Lookup file in the root(s) and returns first path it found or undef.
+
+=cut
+
+sub resolve_file {
+    my $self = shift;
+    my $file = shift;
+
+    $self->_debug("Looking for '$file'");
+    my @roots = $self->roots;
+    unless ( @roots ) {
+        return undef unless -e $file;
+        return $file;
+    }
+
+    foreach my $root ( @roots ) {
+        $self->_debug("Searching in '$root'");
         my @spec = File::Spec->splitpath( $root, 1 );
         my $path = File::Spec->catpath( @spec[0,1], $file );
-        
+
         return $path if -e $path;
     }
-    return;
+    return undef;
+}
+
+=head2 resolve_uri( $uri_string, $base_file )
+
+Takes an URI and base file path and transforms it into new
+file path.
+
+=cut
+
+sub resolve_uri {
+    my $self = shift;
+    my $uri_str = shift;
+    my $base_file = shift;
+
+    my $uri = URI->new( $uri_str, 'http' );
+
+    if ( defined $uri->scheme || defined $uri->authority ) {
+        $self->_debug("Skipping uri because it's external");
+        return undef;
+    }
+
+    my $strip_leading_slash = 0;
+    unless ( $base_file =~ m{^/} ) {
+        $base_file = '/'. $base_file;
+        $strip_leading_slash = 1;
+    }
+    my $base_uri = URI::file->new( $base_file );
+
+    my $path = $uri->abs( $base_uri )->path;
+    $path =~ s{^/}{} if $strip_leading_slash;
+    return $path;
 }
 
 sub _debug {

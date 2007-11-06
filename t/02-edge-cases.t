@@ -34,7 +34,7 @@ Blam!
   * From t/css/02-edge-cases.css: @import url( "foo.css") print,aural;
   */
 
-@media print,aural {
+@media aural, print {
 foo1
 }
 
@@ -45,7 +45,7 @@ foo1
   * From t/css/02-edge-cases.css: @import url(foo2.css ) print, aural, tty;
   */
 
-@media print, aural, tty {
+@media aural, print, tty {
 foo2
 }
 

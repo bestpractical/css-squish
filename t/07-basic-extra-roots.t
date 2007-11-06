@@ -11,7 +11,7 @@ my $expected_result = <<'EOT';
 
 
 /**
-  * From t/css/07-basic-extra-roots.css: @import "07-basic-extra-roots2.css";
+  * From 07-basic-extra-roots.css: @import "07-basic-extra-roots2.css";
   */
 
 foobar
@@ -20,7 +20,7 @@ foobar
 
 
 /**
-  * From t/css/07-basic-extra-roots.css: @import "07-basic-extra-roots3.css";
+  * From 07-basic-extra-roots.css: @import "07-basic-extra-roots3.css";
   */
 
 foobaz
@@ -29,7 +29,7 @@ foobaz
 
 
 /**
-  * From t/css/07-basic-extra-roots.css: @import "07-basic-extra-roots4.css";
+  * From 07-basic-extra-roots.css: @import "07-basic-extra-roots4.css";
   */
 
 fallback
@@ -40,8 +40,8 @@ blam
 
 EOT
 
-CSS::Squish->roots( 't/css2/', 't/css3/' );
-my $result = CSS::Squish->concatenate('t/css/07-basic-extra-roots.css');
+CSS::Squish->roots( 't/css2/', 't/css3/', 't/css/' );
+my $result = CSS::Squish->concatenate('07-basic-extra-roots.css');
 
 is_string($result, $expected_result, "Basic extra roots");
 
