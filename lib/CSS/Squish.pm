@@ -93,11 +93,11 @@ sub new {
     return bless {@_}, ref($proto) || $proto;
 }
 
-=head2 B<CSS::Squish-E<gt>concatenate(@files)>
+=head2 concatenate( @files )
 
 Takes a list of files to concatenate and returns the results as one big scalar.
 
-=head2 B<CSS::Squish-E<gt>concatenate_to($dest, @files)>
+=head2 concatenate_to( $dest, @files )
 
 Takes a filehandle to print to and a list of files to concatenate.
 C<concatenate> uses this method with an C<open>ed scalar.
@@ -223,15 +223,46 @@ The following methods help map URIs to files and find them on the disk.
 In common situation you control CSS and can adopt it to use imports with
 relative URIs and most probably only have to set root(s).
 
-However, you can use subclass these methods to parse css files before submitting,
-implement advanced mapping of URIs to file system and other crazy things.
+However, you can subclass these methods to parse css files before submitting,
+implement advanced mapping of URIs to file system and other things.
 
-=head2 B<CSS::Squish-E<gt>roots(@dirs)>
+Mapping works in the following way. When you call concatenate method we get
+content of file using file_handle method which as well lookup files in roots.
+If roots are not defined then files are treated as absolute paths or relative
+to the current directory. Using of absolute paths is not recommended as
+unhide server dirrectory layout to clients in css comments and as well don't
+allow to handle @import commands with absolute URIs. When files is found we
+parse its content for @import commands. On each URI we call resolve_uri method
+that convert absolute and relative URIs into file paths.
+
+Here is example of processing:
+
+    roots: /www/overlay/, /www/shared/
+
+    $squisher->concatenate('/css/main.css');
+    
+    ->file_handle('/css/main.css');
+        ->resolve_file('/css/main.css');
+        <- '/www/shared/css/main.css';
+    <- handle;
+
+    content parsing
+    find '@import url(nav.css)'
+    -> resolve_uri('nav.css', '/css/main.css');
+    <- '/css/nav.css';
+        ... recursivly process file
+    find '@import url(/css/another.css)'
+    -> resolve_uri('/css/another.css', '/css/main.css');
+    <- '/css/another.css'
+    ...
+
+=head2 roots( @dirs )
 
 A getter/setter for paths to search when looking for files.
 
-The paths specified here are searched to find file. This is useful if
-your server has multiple document roots.
+The paths specified here are searched for files. This is useful if
+your server has multiple document roots or document root doesn't match
+the current dir.
 
 See also 'resolve_file' below.
 
@@ -301,6 +332,8 @@ sub file_handle {
 
 Lookup file in the root(s) and returns first path it found or undef.
 
+When roots are not set just checks if file exists.
+
 =cut
 
 sub resolve_file {
@@ -367,12 +400,6 @@ before @import statements at the top of a file will cause the @import rules
 to not be parsed.  Make sure the @import rules are the very first thing in
 the file (and only one per line).  Processing of @import rules stops as soon
 as the first line that doesn't match an @import rule is encountered.
-
-Only direct @import loops (i.e. where a file imports itself) are checked
-and skipped.  It's easy enough to get this module in a loop.  Don't do it.
-
-As of now, server-relative URLs (instead of file-relative URLs) will not work
-correctly.
 
 All other bugs should be reported via
 L<http://rt.cpan.org/Public/Dist/Display.html?Name=CSS-Squish>
