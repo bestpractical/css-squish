@@ -3,7 +3,7 @@ use warnings;
 
 package CSS::Squish;
 
-$CSS::Squish::VERSION = '0.05';
+$CSS::Squish::VERSION = '0.06';
 
 # Setting this to true will enable lots of debug logging about what
 # CSS::Squish is doing
