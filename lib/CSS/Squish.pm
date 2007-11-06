@@ -407,7 +407,7 @@ or L<bug-CSS-Squish@rt.cpan.org>.
 
 =head1 AUTHOR
 
-Thomas Sibley <trs@bestpractical.com>
+Thomas Sibley <trs@bestpractical.com>, Ruslan Zakirov <ruz@bestpractical.com>
 
 =head1 COPYRIGHT AND LICENSE
 
