@@ -357,6 +357,22 @@ sub resolve_file {
     return undef;
 }
 
+=head2 _resolve_file( $file, @roots )
+
+DEPRECATED. This private method is deprecated and do nothing useful except
+maintaining backwards compatibility. If you were using it then most probably
+to find files in roots before submitting them into concatenate method. Now,
+it's not required and this method returns back file path without changes.
+
+=cut
+
+sub _resolve_file {
+    my ($self, $file, @roots) = @_;
+    require Carp;
+    Carp::carp("You called ->_resolve_file($file, ...). The method is deprecated!");
+    return $file;
+}
+
 =head2 resolve_uri( $uri_string, $base_file )
 
 Takes an URI and base file path and transforms it into new
