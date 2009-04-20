@@ -1,5 +1,10 @@
 Revision history for Perl extension CSS::Squish.
 
+0.08  Mon Apr 20 2009
+    
+    * module doesn't work on perl 5.6.x and older
+    * update docs
+
 0.07  Fri Nov 9 2007
     
     * add back _resolve_file which has been deprecated, to make the module
