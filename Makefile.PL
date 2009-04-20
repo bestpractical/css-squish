@@ -1,9 +1,12 @@
+use 5.008;
 use strict;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME              => 'CSS::Squish',
+    ABSTRACT_FROM     => 'lib/CSS/Squish.pm',
     VERSION_FROM      => 'lib/CSS/Squish.pm',
+    MIN_PERL_VERSION  => 5.008,
     PREREQ_PM         => {
         'File::Spec'        => 0,
         'URI'               => 0,
@@ -11,8 +14,6 @@ WriteMakefile(
         'Scalar::Util'      => 0,
         'Test::LongString'  => 0,
     },
-    ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM  => 'lib/CSS/Squish.pm',
-       AUTHOR         => 'Thomas Sibley <trs@bestpractical.com>') : ()),
+    AUTHOR            => 'Thomas Sibley <trs@bestpractical.com>',
 );
 
