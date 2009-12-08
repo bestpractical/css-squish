@@ -217,6 +217,7 @@ sub _concatenate_to {
         }
     }
     $self->_debug("Printing the rest");
+    local $_;
     print $dest $_ while <$fh>;
     close $fh;
 }

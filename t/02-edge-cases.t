@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 2;
+use Test::More tests => 3;
 use Test::LongString;
 
 use_ok("CSS::Squish");
@@ -66,3 +66,10 @@ my $result = CSS::Squish->concatenate('t/css/02-edge-cases.css');
 
 is_string($result, $expected_result, "Edge cases");
 
+# bug in version 0.08 and older, result was error:
+# Modification of a read-only value attempted
+# at lib/CSS/Squish.pm line 220
+for ('t/css/02-edge-cases.css') {
+    $result = CSS::Squish->concatenate( $_ );
+}
+is_string($result, $expected_result, "no 'Modification of a read-only value'");
