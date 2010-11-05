@@ -12,6 +12,8 @@ WriteMakefile(
         'URI'               => 0,
         'URI::file'         => 0,
         'Scalar::Util'      => 0,
+    },
+    BUILD_REQUIRES    => {
         'Test::LongString'  => 0,
     },
     AUTHOR            => 'Thomas Sibley <trs@bestpractical.com>',
