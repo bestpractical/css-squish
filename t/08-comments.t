@@ -30,7 +30,9 @@ inside 01-basic-import.css
 
 /** End of 01-basic-import.css */
 
-body { color: blue; }
+
+/* endless
+ * bad comment
 
 EOT
 

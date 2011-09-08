@@ -165,9 +165,10 @@ sub _concatenate_to {
                 $line .= $tmp;
                 next unless $line =~ s/^(\s*$COMMENT)//o;
 
-                print $dest $1; last;
+                print $dest $1; goto REDO;
             }
-            goto REDO;
+            # endless comment
+            print $dest $line; last;
         }
         elsif ( $line =~ /$AT_IMPORT/o ) {
             my $import = $1;
