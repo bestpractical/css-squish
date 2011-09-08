@@ -155,8 +155,7 @@ sub _concatenate_to {
     my $file = shift;
     my $seen = shift || {};
 
-    while ( my $line = <$fh> ) {
-        REDO:
+    LINE: while ( my $line = <$fh> ) {
         # skip empty lines and one line comments
         if ( $line =~ /^\s*(?:$COMMENT\s*)*$/o ) {
             print $dest $line;
@@ -166,7 +165,7 @@ sub _concatenate_to {
                 $line .= $tmp;
                 next unless $line =~ s/^(\s*$COMMENT)//o;
 
-                print $dest $1; goto REDO;
+                print $dest $1; redo LINE;
             }
             # endless comment
             print $dest $line; last;
