@@ -1,0 +1,17 @@
+
+/* comment */
+
+/* comment with * inside */
+
+/* multiline
+comment */
+
+/*
+ * shiny
+ * multiline
+ * comment
+ */
+
+@import "01-basic-import.css";
+body { color: blue; }
+

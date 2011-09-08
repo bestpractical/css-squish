@@ -80,6 +80,8 @@ my $AT_IMPORT = qr/^\s*                     # leading whitespace
                    \s*$                     # trailing whitespace
                   /x;
 
+my $COMMENT = qr{/\*[^*]*\*+([^/*][^*]*\*+)*/}ms;
+
 =head1 COMMON METHODS
 
 =head2 new( [roots=>[...]] )
@@ -153,7 +155,21 @@ sub _concatenate_to {
     my $seen = shift || {};
 
     while ( my $line = <$fh> ) {
-        if ( $line =~ /$AT_IMPORT/o ) {
+        REDO:
+        # skip empty lines and one line comments
+        if ( $line =~ /^\s*(?:$COMMENT\s*)*$/o ) {
+            print $dest $line;
+        }
+        elsif ( $line =~ m{^\s*/\*} ) {
+            while ( my $tmp = <$fh> ) {
+                $line .= $tmp;
+                next unless $line =~ s/^(\s*$COMMENT)//o;
+
+                print $dest $1; last;
+            }
+            goto REDO;
+        }
+        elsif ( $line =~ /$AT_IMPORT/o ) {
             my $import = $1;
             my $media  = $2;
 
@@ -213,7 +229,7 @@ sub _concatenate_to {
         }
         else {
             print $dest $line;
-            last if not $line =~ /^\s*$/;
+            last;
         }
     }
     $self->_debug("Printing the rest");
@@ -417,11 +433,13 @@ sub _debug {
 
 =head1 BUGS AND SHORTCOMINGS
 
-At the current time, comments are not skipped.  This means comments happening
-before @import statements at the top of a file will cause the @import rules
-to not be parsed.  Make sure the @import rules are the very first thing in
-the file (and only one per line).  Processing of @import rules stops as soon
-as the first line that doesn't match an @import rule is encountered.
+Comments are ignored.  Make sure the @import rules are the very first
+thing in the file (and only one per line).  Processing of @import rules
+stops as soon as the first line that doesn't match an @import rule is
+encountered.
+
+@charset rule stops processing. Media queries are not supported.
+Patches are welcome.
 
 All other bugs should be reported via
 L<http://rt.cpan.org/Public/Dist/Display.html?Name=CSS-Squish>
