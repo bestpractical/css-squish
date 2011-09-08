@@ -80,6 +80,7 @@ my $AT_IMPORT = qr/^\s*                     # leading whitespace
                    \s*$                     # trailing whitespace
                   /x;
 
+# http://www.w3.org/TR/CSS21/grammar.html#scanner
 my $COMMENT = qr{/\*[^*]*\*+([^/*][^*]*\*+)*/}ms;
 
 =head1 COMMON METHODS
